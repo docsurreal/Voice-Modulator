@@ -1,268 +1,295 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Lo-Fi Tone Modulator Sequencer</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <title>Voice Modulator App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      background: #1e1e1e;
-      font-family: 'Orbitron', sans-serif;
-      color: #eee;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+    html, body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      color: #222;
       margin: 0;
+      padding: 0;
+      touch-action: manipulation;
     }
 
-    canvas#waveform {
-      width: 100%;
-      height: 80px;
-      background: #111;
-      border-radius: 10px;
-      margin-bottom: 20px;
+    .container {
+      max-width: 960px;
+      margin: auto;
+      padding: 24px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     }
 
-    .touch-circle {
-      width: 160px;
-      height: 160px;
-      border-radius: 50%;
-      border: 2px dashed #aaa;
-      position: relative;
-      touch-action: none;
-      margin-bottom: 10px;
-    }
-
-    .dot {
-      width: 16px;
-      height: 16px;
-      background: #ffaaa5;
-      border-radius: 50%;
-      position: absolute;
-      top: 72px;
-      left: 72px;
-      box-shadow: 0 0 10px #ffaaa5;
-    }
-
-    .freq-display {
-      position: absolute;
-      width: 100%;
+    h1 {
       text-align: center;
-      top: 70px;
-      font-size: 14px;
-      color: #ccc;
-      pointer-events: none;
+      color: #444;
+      font-size: 2rem;
+      margin-bottom: 16px;
+    }
+
+    label, select, input, button {
+      width: 100%;
+      margin: 12px 0;
+      font-size: 1rem;
+    }
+
+    select, input[type=text] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+
+    button {
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+
+    button:hover {
+      background: #357ab8;
     }
 
     .controls {
       display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
+      justify-content: space-between;
       flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .knob-wrapper {
+      flex: 1 1 20%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 12px;
+    }
+
+    .data-screen {
+      width: 70px;
+      height: 32px;
+      background: #111;
+      color: red;
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem;
+      text-align: center;
+      padding-top: 4px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+
+    .knob-label {
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+
+    input[type=range] {
+      appearance: none;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: conic-gradient(#4a90e2 0% 50%, #ccc 50% 100%);
+      border: none;
+      transform: rotate(-90deg);
+    }
+
+    #mod1, #mod2 {
+      width: 120px;
+      height: 120px;
+    }
+
+    .circle-modulator {
+      margin: 24px auto 12px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      border: 4px dashed #ddd;
+      position: relative;
+      background: radial-gradient(#fff, #f0f0f0);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    .dot:nth-child(1) { background: #FFB3BA; top: 10%; left: 50%; transform: translate(-50%, -50%); }
+    .dot:nth-child(2) { background: #BAE1FF; top: 50%; left: 90%; transform: translate(-50%, -50%); }
+    .dot:nth-child(3) { background: #BFFCC6; top: 90%; left: 50%; transform: translate(-50%, -50%); }
+    .dot:nth-child(4) { background: #FFFFBA; top: 50%; left: 10%; transform: translate(-50%, -50%); }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    .keyboard {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 32px;
       justify-content: center;
     }
 
-    .sequencer {
-      display: grid;
-      grid-template-columns: repeat(16, 24px);
-      gap: 6px;
-      margin-bottom: 20px;
-      position: relative;
-    }
-
-    .step {
-      width: 24px;
-      height: 40px;
-      background: #444;
+    .key {
+      background: #eee;
+      padding: 12px 16px;
       border-radius: 6px;
       cursor: pointer;
-      transition: 0.2s;
+      font-weight: bold;
+      border: 1px solid #ccc;
     }
 
-    .step.active {
-      background: #88c0d0;
-      box-shadow: 0 0 10px #88c0d0;
-    }
-
-    .playhead {
-      position: absolute;
-      width: 24px;
-      height: 40px;
-      border: 2px solid #ffcc00;
-      border-radius: 6px;
-      box-sizing: border-box;
-      pointer-events: none;
-      transition: left 0.05s linear;
-    }
-
-    button, input[type="number"], select {
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: none;
-      background: #444;
-      color: white;
-      font-size: 1rem;
-      cursor: pointer;
+    .key:hover {
+      background: #d4eaff;
     }
   </style>
 </head>
 <body>
-  <canvas id="waveform"></canvas>
 
-  <div class="touch-circle" id="modulator">
-    <div class="dot" id="dot"></div>
-    <div class="freq-display" id="freqDisplay">Freq: 0Hz</div>
+<div class="container">
+  <h1>Voice Modulator</h1>
+
+  <div class="circle-modulator">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+
+  <div class="button-row">
+    <button id="speakBtn">🔊 Speak</button>
+    <button id="loopBtn">🔁 Loop: OFF</button>
+  </div>
+
+  <label for="voiceSelect">Select Voice:</label>
+  <select id="voiceSelect"></select>
+
+  <label for="nameInput">Say This:</label>
+  <input type="text" id="nameInput" placeholder="Type something to say...">
+
+  <div class="controls">
+    <div class="knob-wrapper">
+      <div class="data-screen" id="rateDisplay">1.00</div>
+      <input type="range" id="rateSlider" min="0.5" max="2" step="0.01" value="1">
+      <label class="knob-label">Rate</label>
+    </div>
+    <div class="knob-wrapper">
+      <div class="data-screen" id="pitchDisplay">1.00</div>
+      <input type="range" id="pitchSlider" min="0" max="2" step="0.01" value="1">
+      <label class="knob-label">Pitch</label>
+    </div>
+    <div class="knob-wrapper">
+      <div class="data-screen" id="volumeDisplay">1.00</div>
+      <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1">
+      <label class="knob-label">Volume</label>
+    </div>
+    <div class="knob-wrapper">
+      <div class="data-screen" id="filterDisplay">5</div>
+      <input type="range" id="mod3" min="0" max="10" step="1" value="5">
+      <label class="knob-label">Filter Mod</label>
+    </div>
   </div>
 
   <div class="controls">
-    <button id="startBtn">▶️ Play</button>
-    <button id="stopBtn">⏹ Stop</button>
-    <label>BPM: <input type="number" id="bpm" value="120" min="60" max="300"></label>
-    <button id="sustainBtn">Sustain</button>
-    <button id="octaveBtn">Octave +1</button>
-    <label for="waveType">Wave:</label>
-    <select id="waveType">
-      <option value="sine">Sine</option>
-      <option value="square" selected>Square</option>
-      <option value="triangle">Triangle</option>
-      <option value="sawtooth">Sawtooth</option>
-    </select>
+    <div class="knob-wrapper">
+      <div class="data-screen" id="fmDisplay">5</div>
+      <input type="range" id="mod1" min="0" max="10" step="1" value="5">
+      <label class="knob-label">FM Mod</label>
+    </div>
+    <div class="knob-wrapper">
+      <div class="data-screen" id="amDisplay">5</div>
+      <input type="range" id="mod2" min="0" max="10" step="1" value="5">
+      <label class="knob-label">AM Mod</label>
+    </div>
   </div>
 
-  <div class="sequencer" id="sequencer">
-    <div class="playhead" id="playhead"></div>
+  <div class="keyboard">
+    <div class="key" onclick="playKey('C')">C</div>
+    <div class="key" onclick="playKey('D')">D</div>
+    <div class="key" onclick="playKey('E')">E</div>
+    <div class="key" onclick="playKey('F')">F</div>
+    <div class="key" onclick="playKey('G')">G</div>
+    <div class="key" onclick="playKey('A')">A</div>
+    <div class="key" onclick="playKey('B')">B</div>
   </div>
+</div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
-  <script>
-    let currentNote = 3;
-    let sustain = false;
-    const synth = new Tone.MonoSynth({
-      oscillator: { type: "square" },
-      filter: { type: "lowpass", frequency: 400, Q: 4 },
-      envelope: { attack: 0.1, decay: 0.3, sustain: 0.3, release: 0.8 }
-    }).toDestination();
-
-    const analyser = new Tone.Analyser("waveform", 256);
-    synth.connect(analyser);
-
-    const canvas = document.getElementById("waveform");
-    const ctx = canvas.getContext("2d");
-    function drawWaveform() {
-      requestAnimationFrame(drawWaveform);
-      const values = analyser.getValue();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.beginPath();
-      ctx.strokeStyle = "#eee";
-      values.forEach((val, i) => {
-        const x = (i / values.length) * canvas.width;
-        const y = (1 - val) * canvas.height / 2;
-        ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-    }
-    drawWaveform();
-
-    const circle = document.getElementById("modulator");
-    const dot = document.getElementById("dot");
-    const freqDisplay = document.getElementById("freqDisplay");
-    let dragging = false;
-    circle.addEventListener("pointerdown", () => dragging = true);
-    document.addEventListener("pointerup", () => dragging = false);
-    circle.addEventListener("pointermove", (e) => {
-      if (!dragging) return;
-      const rect = circle.getBoundingClientRect();
-      const x = e.clientX - rect.left - rect.width / 2;
-      const y = e.clientY - rect.top - rect.height / 2;
-      const angle = Math.atan2(y, x);
-      const radius = Math.min(Math.sqrt(x * x + y * y), 80);
-      const posX = 80 + radius * Math.cos(angle);
-      const posY = 80 + radius * Math.sin(angle);
-      dot.style.left = `${posX - 8}px`;
-      dot.style.top = `${posY - 8}px`;
-
-      const warpZoneThreshold = 60;
-      const filterFreq = 100 + radius * 100;
-      const resonance = (angle + Math.PI) / (2 * Math.PI) * 10;
-
-      if (radius >= warpZoneThreshold) {
-        const warpIntensity = (radius - warpZoneThreshold) / 20;
-        const pitchWarp = Math.sin(angle) * 50 * warpIntensity;
-        synth.set({ oscillator: { detune: pitchWarp } });
-      } else {
-        synth.set({ oscillator: { detune: 0 } });
-      }
-
-      freqDisplay.textContent = `Freq: ${Math.round(filterFreq)}Hz`;
-      synth.filter.set({ frequency: filterFreq, Q: resonance });
-    });
-
-    const sequencer = document.getElementById("sequencer");
-    const playhead = document.getElementById("playhead");
-    const steps = 16;
-    const stepEls = [];
-    const seq = new Array(steps).fill(false);
-    for (let i = 0; i < steps; i++) {
-      const step = document.createElement("div");
-      step.classList.add("step");
-      step.dataset.index = i;
-      sequencer.appendChild(step);
-      stepEls.push(step);
-      step.addEventListener("click", () => {
-        seq[i] = !seq[i];
-        step.classList.toggle("active");
+<script>
+  const sliders = ["rate", "pitch", "volume", "mod1", "mod2", "mod3"];
+  sliders.forEach(id => {
+    const slider = document.getElementById(id + "Slider") || document.getElementById(id);
+    const display = document.getElementById(id + "Display");
+    if (slider && display) {
+      slider.addEventListener("input", () => {
+        display.textContent = slider.value;
       });
     }
+  });
 
-    let index = 0;
-    Tone.Transport.scheduleRepeat((time) => {
-      if (seq[index]) {
-        const note = `C${currentNote}`;
-        if (sustain) {
-          synth.triggerAttack(note, time);
-        } else {
-          synth.triggerAttackRelease(note, "8n", time);
-        }
-      } else if (sustain) {
-        synth.triggerRelease(time);
-      }
-      playhead.style.left = `${index * 30}px`;
-      index = (index + 1) % steps;
-    }, "8n");
+  const voiceSelect = document.getElementById("voiceSelect");
+  const nameInput = document.getElementById("nameInput");
+  const rateSlider = document.getElementById("rateSlider");
+  const pitchSlider = document.getElementById("pitchSlider");
+  const volumeSlider = document.getElementById("volumeSlider");
+  const mod1 = document.getElementById("mod1");
+  const mod2 = document.getElementById("mod2");
+  const mod3 = document.getElementById("mod3");
+  const loopBtn = document.getElementById("loopBtn");
+  const speakBtn = document.getElementById("speakBtn");
 
-    document.getElementById("startBtn").addEventListener("click", async () => {
-      await Tone.start();
-      Tone.Transport.start();
+  let voices = [];
+  let loopMode = false;
+
+  function populateVoices() {
+    voices = speechSynthesis.getVoices();
+    voiceSelect.innerHTML = '';
+    voices.forEach((voice, i) => {
+      const option = document.createElement("option");
+      option.value = i;
+      option.textContent = `${voice.name} (${voice.lang}) ${voice.default ? '★' : ''}`;
+      voiceSelect.appendChild(option);
     });
+  }
+  speechSynthesis.onvoiceschanged = populateVoices;
 
-    document.getElementById("stopBtn").addEventListener("click", () => {
-      Tone.Transport.stop();
-      synth.triggerRelease();
-    });
+  function speakText(text) {
+    const spoken = new SpeechSynthesisUtterance(text || nameInput.value || "Hello!");
+    spoken.voice = voices[voiceSelect.value];
+    spoken.rate = parseFloat(rateSlider.value) + parseFloat(mod2.value) * 0.01;
+    spoken.pitch = parseFloat(pitchSlider.value) + parseFloat(mod1.value) * 0.01;
+    spoken.volume = parseFloat(volumeSlider.value) - parseFloat(mod3.value) * 0.05;
+    spoken.onend = () => { if (loopMode) speakText(text); };
+    speechSynthesis.speak(spoken);
+  }
 
-    document.getElementById("bpm").addEventListener("input", (e) => {
-      Tone.Transport.bpm.value = parseInt(e.target.value, 10);
-    });
+  function toggleLoop() {
+    loopMode = !loopMode;
+    loopBtn.textContent = loopMode ? "🔁 Loop: ON" : "🔁 Loop: OFF";
+    if (!loopMode) speechSynthesis.cancel();
+  }
 
-    document.getElementById("sustainBtn").addEventListener("click", () => {
-      sustain = !sustain;
-      document.getElementById("sustainBtn").textContent = sustain ? "Sustain On" : "Sustain";
-    });
+  function playKey(note) {
+    speakText(`Note ${note}`);
+  }
 
-    document.getElementById("octaveBtn").addEventListener("click", () => {
-      currentNote++;
-      if (currentNote > 6) currentNote = 2;
-      document.getElementById("octaveBtn").textContent = `Octave +${currentNote - 3}`;
-    });
-
-    document.getElementById("waveType").addEventListener("change", (e) => {
-      const type = e.target.value;
-      synth.oscillator.type = type;
-    });
-
-    Tone.Transport.bpm.value = parseInt(document.getElementById("bpm").value, 10);
-  </script>
+  speakBtn.addEventListener("click", () => speakText());
+  loopBtn.addEventListener("click", toggleLoop);
+</script>
 </body>
 </html>

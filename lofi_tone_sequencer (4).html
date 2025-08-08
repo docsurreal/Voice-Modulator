@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lo-Fi Tone Modulator Sequencer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #1e1e1e;
+      font-family: 'Orbitron', sans-serif;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    canvas#waveform {
+      width: 100%;
+      height: 80px;
+      background: #111;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .touch-circle {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 2px dashed #aaa;
+      position: relative;
+      touch-action: none;
+      margin-bottom: 10px;
+    }
+
+    .dot {
+      width: 16px;
+      height: 16px;
+      background: #ffaaa5;
+      border-radius: 50%;
+      position: absolute;
+      top: 72px;
+      left: 72px;
+      box-shadow: 0 0 10px #ffaaa5;
+    }
+
+    .freq-display {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      top: 70px;
+      font-size: 14px;
+      color: #ccc;
+      pointer-events: none;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .sequencer {
+      display: grid;
+      grid-template-columns: repeat(16, 24px);
+      gap: 6px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .step {
+      width: 24px;
+      height: 40px;
+      background: #444;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .step.active {
+      background: #88c0d0;
+      box-shadow: 0 0 10px #88c0d0;
+    }
+
+    .playhead {
+      position: absolute;
+      width: 24px;
+      height: 40px;
+      border: 2px solid #ffcc00;
+      border-radius: 6px;
+      box-sizing: border-box;
+      pointer-events: none;
+      transition: left 0.05s linear;
+    }
+
+    button, input[type="number"], select {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      background: #444;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="waveform"></canvas>
+
+  <div class="touch-circle" id="modulator">
+    <div class="dot" id="dot"></div>
+    <div class="freq-display" id="freqDisplay">Freq: 0Hz</div>
+  </div>
+
+  <div class="controls">
+    <button id="startBtn">▶️ Play</button>
+    <button id="stopBtn">⏹ Stop</button>
+    <label>BPM: <input type="number" id="bpm" value="120" min="60" max="300"></label>
+    <button id="sustainBtn">Sustain</button>
+    <button id="octaveBtn">Octave +1</button>
+    <label for="waveType">Wave:</label>
+    <select id="waveType">
+      <option value="sine">Sine</option>
+      <option value="square" selected>Square</option>
+      <option value="triangle">Triangle</option>
+      <option value="sawtooth">Sawtooth</option>
+    </select>
+  </div>
+
+  <div class="sequencer" id="sequencer">
+    <div class="playhead" id="playhead"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+  <script>
+    let currentNote = 3;
+    let sustain = false;
+    const synth = new Tone.MonoSynth({
+      oscillator: { type: "square" },
+      filter: { type: "lowpass", frequency: 400, Q: 4 },
+      envelope: { attack: 0.1, decay: 0.3, sustain: 0.3, release: 0.8 }
+    }).toDestination();
+
+    const analyser = new Tone.Analyser("waveform", 256);
+    synth.connect(analyser);
+
+    const canvas = document.getElementById("waveform");
+    const ctx = canvas.getContext("2d");
+    function drawWaveform() {
+      requestAnimationFrame(drawWaveform);
+      const values = analyser.getValue();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      ctx.strokeStyle = "#eee";
+      values.forEach((val, i) => {
+        const x = (i / values.length) * canvas.width;
+        const y = (1 - val) * canvas.height / 2;
+        ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+    drawWaveform();
+
+    const circle = document.getElementById("modulator");
+    const dot = document.getElementById("dot");
+    const freqDisplay = document.getElementById("freqDisplay");
+    let dragging = false;
+    circle.addEventListener("pointerdown", () => dragging = true);
+    document.addEventListener("pointerup", () => dragging = false);
+    circle.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const rect = circle.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      const angle = Math.atan2(y, x);
+      const radius = Math.min(Math.sqrt(x * x + y * y), 80);
+      const posX = 80 + radius * Math.cos(angle);
+      const posY = 80 + radius * Math.sin(angle);
+      dot.style.left = `${posX - 8}px`;
+      dot.style.top = `${posY - 8}px`;
+
+      const warpZoneThreshold = 60;
+      const filterFreq = 100 + radius * 100;
+      const resonance = (angle + Math.PI) / (2 * Math.PI) * 10;
+
+      if (radius >= warpZoneThreshold) {
+        const warpIntensity = (radius - warpZoneThreshold) / 20;
+        const pitchWarp = Math.sin(angle) * 50 * warpIntensity;
+        synth.set({ oscillator: { detune: pitchWarp } });
+      } else {
+        synth.set({ oscillator: { detune: 0 } });
+      }
+
+      freqDisplay.textContent = `Freq: ${Math.round(filterFreq)}Hz`;
+      synth.filter.set({ frequency: filterFreq, Q: resonance });
+    });
+
+    const sequencer = document.getElementById("sequencer");
+    const playhead = document.getElementById("playhead");
+    const steps = 16;
+    const stepEls = [];
+    const seq = new Array(steps).fill(false);
+    for (let i = 0; i < steps; i++) {
+      const step = document.createElement("div");
+      step.classList.add("step");
+      step.dataset.index = i;
+      sequencer.appendChild(step);
+      stepEls.push(step);
+      step.addEventListener("click", () => {
+        seq[i] = !seq[i];
+        step.classList.toggle("active");
+      });
+    }
+
+    let index = 0;
+    Tone.Transport.scheduleRepeat((time) => {
+      if (seq[index]) {
+        const note = `C${currentNote}`;
+        if (sustain) {
+          synth.triggerAttack(note, time);
+        } else {
+          synth.triggerAttackRelease(note, "8n", time);
+        }
+      } else if (sustain) {
+        synth.triggerRelease(time);
+      }
+      playhead.style.left = `${index * 30}px`;
+      index = (index + 1) % steps;
+    }, "8n");
+
+    document.getElementById("startBtn").addEventListener("click", async () => {
+      await Tone.start();
+      Tone.Transport.start();
+    });
+
+    document.getElementById("stopBtn").addEventListener("click", () => {
+      Tone.Transport.stop();
+      synth.triggerRelease();
+    });
+
+    document.getElementById("bpm").addEventListener("input", (e) => {
+      Tone.Transport.bpm.value = parseInt(e.target.value, 10);
+    });
+
+    document.getElementById("sustainBtn").addEventListener("click", () => {
+      sustain = !sustain;
+      document.getElementById("sustainBtn").textContent = sustain ? "Sustain On" : "Sustain";
+    });
+
+    document.getElementById("octaveBtn").addEventListener("click", () => {
+      currentNote++;
+      if (currentNote > 6) currentNote = 2;
+      document.getElementById("octaveBtn").textContent = `Octave +${currentNote - 3}`;
+    });
+
+    document.getElementById("waveType").addEventListener("change", (e) => {
+      const type = e.target.value;
+      synth.oscillator.type = type;
+    });
+
+    Tone.Transport.bpm.value = parseInt(document.getElementById("bpm").value, 10);
+  </script>
+</body>
+</html>

@@ -5,118 +5,400 @@
   <meta charset="UTF-8">
   <title>Voice Modulator App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+    :root {
+      color-scheme: dark;
+      --ink: #ffffff;
+      --muted: rgba(177, 156, 217, 0.85);
+      --panel: rgba(255, 255, 255, 0.02);
+      --panel-border: rgba(177, 156, 217, 0.15);
+      --glow: rgba(147, 112, 219, 0.5);
+      --accent: rgba(177, 156, 217, 1);
+      --accent-strong: rgba(147, 112, 219, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600&display=swap');
 
     html, body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f4f4;
-      color: #222;
+      font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif;
+      background: #000;
+      color: var(--ink);
       margin: 0;
       padding: 0;
+      min-height: 100%;
       touch-action: manipulation;
     }
 
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 40px 20px 80px;
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(700px 500px at 15% 15%, rgba(147, 112, 219, 0.12), transparent 60%),
+        radial-gradient(600px 400px at 85% 30%, rgba(177, 156, 217, 0.1), transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 36px 36px;
+      opacity: 0.22;
+      pointer-events: none;
+      z-index: 0;
+    }
+
     .container {
-      max-width: 960px;
-      margin: auto;
-      padding: 24px;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      position: relative;
+      z-index: 1;
+      width: min(980px, 100%);
+      padding: 48px 56px;
+      background: var(--panel);
+      border-radius: 40px;
+      border: 1px solid var(--panel-border);
+      box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
     }
 
     h1 {
       text-align: center;
-      color: #444;
-      font-size: 2rem;
-      margin-bottom: 16px;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      font-weight: 200;
+      margin: 0 0 20px;
+      color: #e8e8e8;
+      text-shadow:
+        0 0 10px rgba(177, 156, 217, 0.5),
+        0 0 30px rgba(147, 112, 219, 0.4);
     }
 
-    label, select, input, button {
+    label, select, input, textarea, button {
       width: 100%;
       margin: 12px 0;
       font-size: 1rem;
+      letter-spacing: 0.08em;
+    }
+
+    label {
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
     }
 
     select, input[type=text] {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      background: #fafafa;
+      padding: 12px 14px;
+      border: 1px solid rgba(177, 156, 217, 0.2);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--ink);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    /* Specific styling for the select dropdown to ensure proper padding for the custom arrow */
+    select {
+        padding-right: 40px; /* Increased padding on the right to make space for the arrow */
+        -webkit-appearance: none; /* Hide default arrow on WebKit browsers */
+        -moz-appearance: none;    /* Hide default arrow on Firefox */
+        appearance: none;         /* Hide default arrow */
+        /* Custom SVG arrow */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23b19cd9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='lucide lucide-chevron-down'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center; /* Position the custom arrow */
+        background-size: 20px; /* Size the custom arrow */
+    }
+
+    select:focus, input[type=text]:focus {
+      outline: 1px solid rgba(177, 156, 217, 0.6);
+      box-shadow: 0 0 20px rgba(147, 112, 219, 0.2);
     }
 
     button {
-      background: #4a90e2;
-      color: white;
+      background: linear-gradient(135deg, rgba(177,156,217,0.9), rgba(135,206,250,0.9));
+      color: #0b0d12;
       border: none;
-      padding: 12px;
-      font-size: 1rem;
-      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border-radius: 16px;
       cursor: pointer;
       margin-top: 16px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
 
     button:hover {
-      background: #357ab8;
+      transform: translateY(-3px);
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.45);
+    }
+
+    button svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--ink);
+      stroke-width: 3;
+    }
+
+    .panel-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-top: 24px;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(177, 156, 217, 0.2);
+      border-radius: 22px;
+      padding: 18px 20px 10px;
+      box-shadow:
+        0 12px 36px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(14px);
+    }
+
+    .panel-title {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(177, 156, 217, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(147, 112, 219, 0.25);
+      margin: 0 auto 10px;
+      color: rgba(177, 156, 217, 0.9);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-size: 0.7rem;
+      width: fit-content;
+    }
+
+    .panel-title svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .panel-toggle {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .panel-caret {
+      width: 9px;
+      height: 9px;
+      border-right: 2px solid rgba(177, 156, 217, 0.9);
+      border-bottom: 2px solid rgba(177, 156, 217, 0.9);
+      transform: rotate(45deg);
+      margin-left: 4px;
+      transition: transform 0.2s ease;
+    }
+
+    .panel.is-collapsed .panel-caret {
+      transform: rotate(-45deg);
+    }
+
+    .panel-body {
+      padding-top: 6px;
+    }
+
+    .panel.is-collapsed .panel-body {
+      display: none;
     }
 
     .controls {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       flex-wrap: wrap;
-      margin-top: 24px;
+      margin-top: 10px;
+      gap: 12px;
     }
 
     .knob-wrapper {
-      flex: 1 1 20%;
+      flex: 1 1 200px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: 12px;
+      margin: 10px;
     }
 
     .data-screen {
-      width: 70px;
-      height: 32px;
-      background: #111;
-      color: red;
-      font-family: 'Orbitron', monospace;
-      font-size: 1rem;
+      width: 80px;
+      height: 34px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #ffffff;
+      font-size: 0.95rem;
       text-align: center;
-      padding-top: 4px;
-      border-radius: 4px;
-      margin-bottom: 6px;
+      padding-top: 6px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      letter-spacing: 0.1em;
+      border: 1px solid rgba(177, 156, 217, 0.25);
+      box-shadow:
+        0 0 10px rgba(147, 112, 219, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
 
     .knob-label {
       margin-top: 8px;
-      font-size: 0.9rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: center;
     }
 
     input[type=range] {
       appearance: none;
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: conic-gradient(#4a90e2 0% 50%, #ccc 50% 100%);
-      border: none;
-      transform: rotate(-90deg);
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: #060607;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow:
+        0 0 12px rgba(0, 0, 0, 0.6),
+        inset 0 2px 3px rgba(255, 255, 255, 0.08),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.9);
+      cursor: pointer;
     }
 
-    #mod1, #mod2 {
-      width: 120px;
-      height: 120px;
+    input[type=range]::-webkit-slider-thumb {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(177, 156, 217, 0.95);
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 0 12px rgba(147, 112, 219, 0.6);
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(177, 156, 217, 0.95);
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 0 12px rgba(147, 112, 219, 0.6);
+    }
+
+    .chat-input-container {
+      position: relative;
+      width: 100%;
+    }
+
+    textarea#nameInput {
+      width: 100%;
+      padding: 12px 80px 12px 14px; /* Make space on the right for buttons */
+      border: 1px solid rgba(177, 156, 217, 0.2);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--ink);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      font-family: inherit;
+      font-size: 1rem;
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    textarea#nameInput:focus {
+      outline: 1px solid rgba(177, 156, 217, 0.6);
+      box-shadow: 0 0 20px rgba(147, 112, 219, 0.2);
+    }
+
+    .chat-buttons {
+        position: absolute;
+        bottom: 16px;
+        right: 12px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .chat-buttons button {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .chat-buttons button svg {
+        width: 20px;
+        height: 20px;
+        stroke: rgba(255, 255, 255, 0.7);
+        stroke-width: 2.5;
+        transition: all 0.2s ease;
+    }
+
+    .chat-buttons button:hover svg {
+        stroke: rgba(255, 255, 255, 1);
+        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+    }
+
+    .chat-buttons button:active svg {
+        transform: scale(0.9);
+    }
+
+    .chat-buttons button.active svg {
+        stroke: var(--accent);
+        filter: drop-shadow(0 0 7px var(--accent));
     }
 
     .circle-modulator {
-      margin: 24px auto 12px;
-      width: 220px;
-      height: 220px;
+      margin: 30px auto 18px;
+      width: 240px;
+      height: 240px;
       border-radius: 50%;
-      border: 4px dashed #ddd;
+      border: 1px solid rgba(177, 156, 217, 0.35);
       position: relative;
-      background: radial-gradient(#fff, #f0f0f0);
+      background:
+        radial-gradient(circle at 30% 20%, rgba(177, 156, 217, 0.25), transparent 45%),
+        radial-gradient(circle at 70% 70%, rgba(147, 112, 219, 0.2), transparent 50%),
+        rgba(255, 255, 255, 0.02);
+      box-shadow:
+        0 0 30px rgba(147, 112, 219, 0.3),
+        inset 0 0 30px rgba(0, 0, 0, 0.6);
+      animation: float 6s ease-in-out infinite;
     }
 
     .dot {
@@ -124,40 +406,123 @@
       height: 12px;
       border-radius: 50%;
       position: absolute;
+      box-shadow: 0 0 12px currentColor;
+      animation: pulse 2.8s ease-in-out infinite;
     }
 
-    .dot:nth-child(1) { background: #FFB3BA; top: 10%; left: 50%; transform: translate(-50%, -50%); }
-    .dot:nth-child(2) { background: #BAE1FF; top: 50%; left: 90%; transform: translate(-50%, -50%); }
-    .dot:nth-child(3) { background: #BFFCC6; top: 90%; left: 50%; transform: translate(-50%, -50%); }
-    .dot:nth-child(4) { background: #FFFFBA; top: 50%; left: 10%; transform: translate(-50%, -50%); }
+    .dot:nth-child(1) { background: #b19cd9; top: 12%; left: 50%; transform: translate(-50%, -50%); }
+    .dot:nth-child(2) { background: #9370db; top: 50%; left: 88%; transform: translate(-50%, -50%); animation-delay: 0.3s; }
+    .dot:nth-child(3) { background: #c8b4ff; top: 88%; left: 50%; transform: translate(-50%, -50%); animation-delay: 0.6s; }
+    .dot:nth-child(4) { background: #aab7ff; top: 50%; left: 12%; transform: translate(-50%, -50%); animation-delay: 0.9s; }
 
     .button-row {
       display: flex;
       justify-content: center;
-      gap: 20px;
-      margin-top: 16px;
+      gap: 18px;
+      margin-top: 18px;
     }
 
     .keyboard {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 10px;
-      margin-top: 32px;
+      margin-top: 10px;
       justify-content: center;
+      overflow-x: auto;
+      padding-bottom: 6px;
     }
 
     .key {
-      background: #eee;
-      padding: 12px 16px;
-      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 8px 14px;
+      border-radius: 14px;
       cursor: pointer;
-      font-weight: bold;
-      border: 1px solid #ccc;
+      font-weight: 300;
+      border: 1px solid rgba(177, 156, 217, 0.2);
+      color: #ffffff;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+      transition: all 0.3s ease;
+      font-size: 12px;
     }
 
     .key:hover {
-      background: #d4eaff;
+      border-color: rgba(177, 156, 217, 0.35);
+      box-shadow:
+        0 15px 40px rgba(0, 0, 0, 0.4),
+        0 0 18px rgba(147, 112, 219, 0.25);
+      transform: translateY(-3px);
     }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+      50% { transform: translate(-50%, -50%) scale(1.35); opacity: 0.6; }
+    }
+
+    .footer {
+      margin-top: auto;
+      padding-top: 28px;
+      text-align: center;
+      font-size: 0.7rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 24px 16px 60px;
+      }
+
+      .container {
+        padding: 30px 22px;
+        border-radius: 26px;
+      }
+
+      h1 {
+        letter-spacing: 0.2em;
+      }
+
+      .controls {
+        justify-content: center;
+      }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+  <style>
+        #waveCanvas {
+            display: block;
+            margin: 20px auto;
+            width: 560px;
+            height: 110px;
+            max-width: 92vw;
+            padding: 0;
+            box-sizing: border-box;
+            padding-bottom: 8px;
+            border-radius: 18px;
+            border: 1px solid rgba(177, 156, 217, 0.35);
+            background-color: rgba(20, 16, 32, 0.6);
+            background-image:
+              linear-gradient(rgba(177, 156, 217, 0.18) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(177, 156, 217, 0.18) 1px, transparent 1px);
+            background-size: 24px 24px;
+            box-shadow:
+              0 0 30px rgba(147, 112, 219, 0.25),
+              inset 0 0 30px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+        }
+
+        #waveCanvas canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
   </style>
 </head>
 <body>
@@ -165,70 +530,93 @@
 <div class="container">
   <h1>Voice Modulator</h1>
 
-  <div class="circle-modulator">
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
-  </div>
-
-  <div class="button-row">
-    <button id="speakBtn">🔊 Speak</button>
-    <button id="loopBtn">🔁 Loop: OFF</button>
-  </div>
+  <div id="waveCanvas"></div>
 
   <label for="voiceSelect">Select Voice:</label>
   <select id="voiceSelect"></select>
 
   <label for="nameInput">Say This:</label>
-  <input type="text" id="nameInput" placeholder="Type something to say...">
-
-  <div class="controls">
-    <div class="knob-wrapper">
-      <div class="data-screen" id="rateDisplay">1.00</div>
-      <input type="range" id="rateSlider" min="0.5" max="2" step="0.01" value="1">
-      <label class="knob-label">Rate</label>
-    </div>
-    <div class="knob-wrapper">
-      <div class="data-screen" id="pitchDisplay">1.00</div>
-      <input type="range" id="pitchSlider" min="0" max="2" step="0.01" value="1">
-      <label class="knob-label">Pitch</label>
-    </div>
-    <div class="knob-wrapper">
-      <div class="data-screen" id="volumeDisplay">1.00</div>
-      <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1">
-      <label class="knob-label">Volume</label>
-    </div>
-    <div class="knob-wrapper">
-      <div class="data-screen" id="filterDisplay">5</div>
-      <input type="range" id="mod3" min="0" max="10" step="1" value="5">
-      <label class="knob-label">Filter Mod</label>
+  <div class="chat-input-container">
+    <textarea id="nameInput" rows="3" placeholder="Type something to say..."></textarea>
+    <div class="chat-buttons">
+        <button id="speakBtn" title="Speak"><i data-lucide="volume-2"></i></button>
+        <button id="stopBtn" title="Stop"><i data-lucide="x"></i></button>
+        <button id="loopBtn" title="Toggle Loop"><i data-lucide="repeat"></i></button>
     </div>
   </div>
 
-  <div class="controls">
-    <div class="knob-wrapper">
-      <div class="data-screen" id="fmDisplay">5</div>
-      <input type="range" id="mod1" min="0" max="10" step="1" value="5">
-      <label class="knob-label">FM Mod</label>
+  <div class="panel-grid">
+    <div class="panel is-collapsed">
+      <button class="panel-title panel-toggle" type="button" aria-expanded="false">
+        <i data-lucide="waveform"></i> Voice Controls <span class="panel-caret"></span>
+      </button>
+      <div class="panel-body">
+        <div class="controls">
+          <div class="knob-wrapper">
+            <div class="data-screen" id="rateDisplay">1.00</div>
+            <input type="range" id="rateSlider" min="0.5" max="2" step="0.01" value="1">
+            <label class="knob-label">Rate</label>
+          </div>
+          <div class="knob-wrapper">
+            <div class="data-screen" id="pitchDisplay">1.00</div>
+            <input type="range" id="pitchSlider" min="0" max="2" step="0.01" value="1">
+            <label class="knob-label">Pitch</label>
+          </div>
+          <div class="knob-wrapper">
+            <div class="data-screen" id="volumeDisplay">1.00</div>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1">
+            <label class="knob-label">Volume</label>
+          </div>
+          <div class="knob-wrapper">
+            <div class="data-screen" id="filterDisplay">5</div>
+            <input type="range" id="mod3" min="0" max="10" step="1" value="5">
+            <label class="knob-label">Filter Mod</label>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="knob-wrapper">
-      <div class="data-screen" id="amDisplay">5</div>
-      <input type="range" id="mod2" min="0" max="10" step="1" value="5">
-      <label class="knob-label">AM Mod</label>
-    </div>
-  </div>
 
-  <div class="keyboard">
-    <div class="key" onclick="playKey('C')">C</div>
-    <div class="key" onclick="playKey('D')">D</div>
-    <div class="key" onclick="playKey('E')">E</div>
-    <div class="key" onclick="playKey('F')">F</div>
-    <div class="key" onclick="playKey('G')">G</div>
-    <div class="key" onclick="playKey('A')">A</div>
-    <div class="key" onclick="playKey('B')">B</div>
+    <div class="panel is-collapsed">
+      <button class="panel-title panel-toggle" type="button" aria-expanded="false">
+        <i data-lucide="dial"></i> Modulators <span class="panel-caret"></span>
+      </button>
+      <div class="panel-body">
+        <div class="controls">
+          <div class="knob-wrapper">
+            <div class="data-screen" id="fmDisplay">5</div>
+            <input type="range" id="mod1" min="0" max="10" step="1" value="5">
+            <label class="knob-label">FM Mod</label>
+          </div>
+          <div class="knob-wrapper">
+            <div class="data-screen" id="amDisplay">5</div>
+            <input type="range" id="mod2" min="0" max="10" step="1" value="5">
+            <label class="knob-label">AM Mod</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel is-collapsed">
+      <button class="panel-title panel-toggle" type="button" aria-expanded="false">
+        <i data-lucide="music"></i> Notes <span class="panel-caret"></span>
+      </button>
+      <div class="panel-body">
+        <div class="keyboard">
+          <div class="key" onclick="playKey('C')">C</div>
+          <div class="key" onclick="playKey('D')">D</div>
+          <div class="key" onclick="playKey('E')">E</div>
+          <div class="key" onclick="playKey('F')">F</div>
+          <div class="key" onclick="playKey('G')">G</div>
+          <div class="key" onclick="playKey('A')">A</div>
+          <div class="key" onclick="playKey('B')">B</div>
+          <div class="key" onclick="playKey('C5')">C5</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
+<footer class="footer">Doc Surreal - Voice Modulator</footer>
 
 <script>
   const sliders = ["rate", "pitch", "volume", "mod1", "mod2", "mod3"];
@@ -252,19 +640,63 @@
   const mod3 = document.getElementById("mod3");
   const loopBtn = document.getElementById("loopBtn");
   const speakBtn = document.getElementById("speakBtn");
+  const stopBtn = document.getElementById("stopBtn");
 
   let voices = [];
   let loopMode = false;
+  const defaultSentence = "My voice is my pasport, verify me.";
+  let speechPulseTimer = null;
 
   function populateVoices() {
     voices = speechSynthesis.getVoices();
+    const previousValue = voiceSelect.value;
     voiceSelect.innerHTML = '';
+
+    const languageNames = typeof Intl !== 'undefined' && Intl.DisplayNames
+      ? new Intl.DisplayNames(['en'], { type: 'language' })
+      : null;
+    const regionNames = typeof Intl !== 'undefined' && Intl.DisplayNames
+      ? new Intl.DisplayNames(['en'], { type: 'region' })
+      : null;
+
+    const groups = new Map();
     voices.forEach((voice, i) => {
-      const option = document.createElement("option");
-      option.value = i;
-      option.textContent = `${voice.name} (${voice.lang}) ${voice.default ? '★' : ''}`;
-      voiceSelect.appendChild(option);
+      const [langCode, regionCode] = (voice.lang || '').split('-');
+      const languageLabel = languageNames?.of(langCode) || langCode || 'Unknown';
+      const regionLabel = regionNames?.of(regionCode) || regionCode || 'Unknown';
+      const groupLabel = regionCode
+        ? `${languageLabel} (${regionLabel})`
+        : `${languageLabel}`;
+      if (!groups.has(groupLabel)) {
+        groups.set(groupLabel, []);
+      }
+      groups.get(groupLabel).push({ voice, index: i });
     });
+
+    Array.from(groups.entries()).forEach(([groupLabel, items]) => {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = groupLabel;
+      items.forEach(({ voice, index }) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = `${voice.name} (${voice.lang}) ${voice.default ? '★' : ''}`;
+        optgroup.appendChild(option);
+      });
+      voiceSelect.appendChild(optgroup);
+    });
+
+    const googleEnglishIndex = voices.findIndex(
+      (voice) =>
+        voice.name && voice.lang &&
+        voice.name.toLowerCase().includes('google') &&
+        voice.lang.toLowerCase().startsWith('en')
+    );
+
+    if (previousValue) {
+      voiceSelect.value = previousValue;
+    } else if (googleEnglishIndex >= 0) {
+      voiceSelect.value = String(googleEnglishIndex);
+    }
   }
   speechSynthesis.onvoiceschanged = populateVoices;
 
@@ -274,22 +706,211 @@
     spoken.rate = parseFloat(rateSlider.value) + parseFloat(mod2.value) * 0.01;
     spoken.pitch = parseFloat(pitchSlider.value) + parseFloat(mod1.value) * 0.01;
     spoken.volume = parseFloat(volumeSlider.value) - parseFloat(mod3.value) * 0.05;
-    spoken.onend = () => { if (loopMode) speakText(text); };
+    spoken.onstart = () => {
+      speechTarget = 0.8;
+      if (speechPulseTimer) clearInterval(speechPulseTimer);
+      speechPulseTimer = setInterval(() => {
+        if (!speechSynthesis.speaking) return;
+        speechTarget = Math.max(speechTarget, 0.9);
+      }, 140);
+    };
+    spoken.onboundary = (event) => {
+      if (event.name === 'word') {
+        speechTarget = 1.0;
+        for (let i = 0; i < zoneCount; i += 1) {
+          zonePulses[i] = 1;
+          zonePhases[i] = Math.random() * Math.PI * 2;
+        }
+      }
+    };
+    spoken.onend = () => {
+      speechTarget = 0;
+      if (speechPulseTimer) {
+        clearInterval(speechPulseTimer);
+        speechPulseTimer = null;
+      }
+      if (loopMode) speakText(text);
+    };
     speechSynthesis.speak(spoken);
   }
 
   function toggleLoop() {
     loopMode = !loopMode;
-    loopBtn.textContent = loopMode ? "🔁 Loop: ON" : "🔁 Loop: OFF";
+    loopBtn.classList.toggle('active', loopMode);
     if (!loopMode) speechSynthesis.cancel();
   }
 
+  function stopSpeech() {
+    loopMode = false;
+    loopBtn.classList.remove('active');
+    speechSynthesis.cancel();
+    speechTarget = 0;
+    if (speechPulseTimer) {
+      clearInterval(speechPulseTimer);
+      speechPulseTimer = null;
+    }
+  }
+
   function playKey(note) {
-    speakText(`Note ${note}`);
+    playTone(note);
+    // Removed speakText() call as per user's request for Web Audio API to "change the voice to the right key"
   }
 
   speakBtn.addEventListener("click", () => speakText());
+  stopBtn.addEventListener("click", stopSpeech);
   loopBtn.addEventListener("click", toggleLoop);
+
+  nameInput.value = defaultSentence;
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+
+  document.querySelectorAll('.panel').forEach((panel) => {
+    const toggle = panel.querySelector('.panel-toggle');
+    const body = panel.querySelector('.panel-body');
+    if (!toggle || !body) return;
+    const isCollapsed = panel.classList.contains('is-collapsed');
+    toggle.setAttribute('aria-expanded', (!isCollapsed).toString());
+    toggle.addEventListener('click', () => {
+      const nowCollapsed = panel.classList.toggle('is-collapsed');
+      toggle.setAttribute('aria-expanded', (!nowCollapsed).toString());
+    });
+  });
+
+  const noteFrequencies = {
+      'C': 261.63, // C4
+      'D': 293.66, // D4
+      'E': 329.63, // E4
+      'F': 349.23, // F4
+      'G': 392.00, // G4
+      'A': 440.00, // A4
+      'B': 493.88, // B4
+      'C5': 523.25, // C5
+  };
+
+  let audioCtx; // Declare audio context once
+
+  function playTone(note) {
+      if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const frequency = noteFrequencies[note];
+      if (!frequency) return; // Exit if note not found
+
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'sine'; // Sine wave for a clean musical tone
+      oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+      // Simple ADSR envelope
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05); // Attack to 0.5 volume over 50ms
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);   // Release to 0 volume over 450ms (total 500ms)
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.5); // Stop after 500ms
+  }
+</script>
+<script>
+        // P5.js sketch for wave animation
+        let angle = 0;
+        let radius = 85;
+        let stretchX = 1.9;
+        let repellerRadius = 10;
+        let speechEnergy = 0;
+        let speechTarget = 0;
+        const zoneCount = 8;
+        const zonePulses = new Array(zoneCount).fill(0);
+        const zonePhases = Array.from({ length: zoneCount }, (_, i) => i * 0.7);
+
+        function setup() {
+            const canvas = createCanvas(560, 110);
+            canvas.parent('waveCanvas');
+            sizeWaveCanvas();
+        }
+
+        function windowResized() {
+            sizeWaveCanvas();
+        }
+
+        function sizeWaveCanvas() {
+            const wrap = document.getElementById('waveCanvas');
+            if (!wrap) return;
+            const w = Math.max(100, wrap.clientWidth);
+            const h = Math.max(60, wrap.clientHeight);
+            resizeCanvas(w, h);
+        }
+
+        function draw() {
+            clear();
+            translate(width / 2, height / 2);
+
+            const mx = mouseX - width / 2;
+            const my = mouseY - height / 2;
+            if (window.speechSynthesis && window.speechSynthesis.speaking) {
+                speechTarget = Math.max(speechTarget, 1.0);
+            }
+            speechEnergy = lerp(speechEnergy, speechTarget, 0.18);
+            speechTarget = Math.max(0, speechTarget - 0.05);
+            const ampScale = 0.25 + speechEnergy * 1.55;
+            for (let i = 0; i < zoneCount; i += 1) {
+                zonePulses[i] = Math.max(0, zonePulses[i] - 0.06);
+                zonePhases[i] += 0.18 + speechEnergy * 0.45;
+            }
+
+            function drawWaveLine(yOffset, strokeColor, weight, glow, baseAmp, noiseAmp, reactAmp, pullStrength) {
+                noFill();
+                stroke(strokeColor);
+                strokeWeight(weight);
+                drawingContext.shadowBlur = glow;
+                drawingContext.shadowColor = strokeColor;
+
+                beginShape();
+                for (let x = -width / 2; x <= width / 2; x += 4) {
+                    const xNorm = map(x, -width / 2, width / 2, 0, 4);
+                    const speechBoost = ampScale;
+                    const zoneIndex = Math.min(
+                        zoneCount - 1,
+                        Math.max(0, Math.floor(map(x, -width / 2, width / 2, 0, zoneCount)))
+                    );
+                    const zonePower = zonePulses[zoneIndex];
+                    const zonePhase = zonePhases[zoneIndex];
+                    let y = yOffset;
+                    y += sin(xNorm * 3 + angle * 2.2) * baseAmp * speechBoost * 1.2;
+                    y += cos(xNorm * 5 - angle * 1.8) * (baseAmp * 0.7) * speechBoost * 1.2;
+                    y += map(noise(xNorm, angle * 0.6), 0, 1, -noiseAmp, noiseAmp) * speechBoost * 1.2;
+                    const spikeA = sin(xNorm * 8 + zonePhase);
+                    const spikeB = cos(xNorm * 12 - zonePhase * 0.7);
+                    const spikeSharpA = Math.sign(spikeA) * pow(Math.abs(spikeA), 2.4);
+                    const spikeSharpB = Math.sign(spikeB) * pow(Math.abs(spikeB), 2.1);
+                    y += spikeSharpA * (24 + speechEnergy * 40) * zonePower;
+                    y += spikeSharpB * (16 + speechEnergy * 30) * zonePower;
+
+                    const d = dist(x, y, mx, my);
+                    if (d < 70) {
+                        const force = pow(map(d, 0, 70, 1, 0), 1.5);
+                        y += sin(angle * 3 + xNorm * 4) * force * reactAmp * speechBoost * 1.4;
+                        y -= (my - y) * force * pullStrength * (0.8 + speechEnergy * 0.9);
+                    }
+
+                    vertex(x, y);
+                }
+                endShape();
+            }
+
+            // Centered, steadier blue line
+            drawWaveLine(0, 'rgba(135, 206, 250, 0.75)', 2, 10, 3, 3, 4, 0.06);
+            // Overlapping, more reactive line
+            drawWaveLine(0, 'rgba(177, 156, 217, 0.95)', 2.5, 15, 7, 8, 14, 0.2);
+            drawWaveLine(0, 'rgba(147, 112, 219, 0.8)', 1.5, 8, 7, 8, 10, 0.16);
+
+            angle += 0.016 + speechEnergy * 0.07;
+        }
 </script>
 </body>
 </html>
